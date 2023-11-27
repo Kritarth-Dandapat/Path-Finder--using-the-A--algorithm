@@ -1,6 +1,8 @@
 
 import pygame
 from queue import PriorityQueue
+from algorithm import algorithm
+from pixels import Spot
 
 WIDTH = 800
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
@@ -18,123 +20,6 @@ ORANGE = (255, 165 ,0)
 GREY = (128, 128, 128)
 TURQUOISE = (64, 224, 208)
 
-class Spot: 
-        def __init__(self, row, col, width, total_rows):
-                self.row = row
-                self.col = col
-                self.width = width
-                self.x = row * width
-                self.y = col * width
-                self.neighbours = []
-                self.color = WHITE
-                self.total_rows = total_rows
-        def get_pos(self):
-                return self.row, self.col
-        def is_closed(self):
-                return self.color == RED
-        
-        def is_open(self):
-                return self.color == GREEN
-        def is_barrier(self):
-                return self.color == BLACK
-        
-        def is_start(self):
-                return self.color == ORANGE
-        
-        def is_end(self):
-                return self.color == PURPLE
-        
-        def reset(self):
-                self.color = WHITE
-
-        def make_open(self):
-                self.color == GREEN
-        def make_closed(self):
-                self.color = RED
-        def make_barrier(self):
-                self.color = BLACK
-        def make_end(self):
-                self.color = TURQUOISE
-        def make_path(self):
-                self.color = PURPLE
-        def make_start(self):
-                self.color = ORANGE
-        
-        def draw(self, win):
-                pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.width))
-        
-        def update_neighbours(self, grid):
-                self.neighbours = []
-                if self.row < self.total_rows -1 and not grid[self.row +1][self.col].is_barrier():
-                        self.neighbours.append(grid[self.row + 1][self.col]) # going down
-
-                if self.row > 0 and not grid[self.row -1][self.col].is_barrier():
-                        self.neighbours.append(grid[self.row -1][self.col]) # above
-
-                if self.col < self.total_rows -1 and not grid[self.row][self.col+1].is_barrier():
-                        self.neighbours.append(grid[self.row ][self.col + 1]) # going right
-
-                if self.col > 0 and not grid[self.row][self.col-1].is_barrier():
-                        self.neighbours.append(grid[self.row][self.col-1])
-
-        
-        def __lt__(self, other):
-                return False
-        
-
-def h(p1, p2):
-        x1, y1 = p1
-        x2, y2 = p2
-        return abs(y1 - y2) + abs(x1 - x2)
-
-def reconstruct_path(came_from, current, draw):
-	while current in came_from:
-		current = came_from[current]
-		current.make_path()
-
-		draw()
-
-def algorithm(draw, grid, start, end):
-        count = 0
-        open_set = PriorityQueue()
-        open_set.put((0, count, start))
-        came_from = {}
-        g_score = {spot: float("inf") for row in grid for spot in row}
-        g_score[start] = 0
-        f_score = {spot: float("inf") for row in grid for spot in row}
-        f_score[start] = h(start.get_pos(), end.get_pos())
-
-        open_set_hash = {start}
-
-        while not open_set.empty():
-                for event in pygame.event.get():
-                        if event.type == pygame.QUIT:
-                                pygame.quit()
-        
-                current = open_set.get()[2]
-                open_set_hash.remove(current)
-
-                if current == end:
-                        reconstruct_path(came_from, end, draw)
-                        end.make_end()
-                        return True
-                
-                for neighbour in current.neighbours:
-                        temp_g_score = g_score[current] + 1
-
-                        if temp_g_score < g_score[neighbour]:
-                                came_from[neighbour] = current
-                                g_score[neighbour] = temp_g_score
-                                f_score[neighbour] = temp_g_score + h(neighbour.get_pos(), end.get_pos())
-                                if neighbour not in open_set_hash:
-                                        count += 1
-                                        open_set.put((f_score[neighbour], count, neighbour))
-                                        open_set_hash.add(neighbour)
-                                        neighbour.make_open()
-                draw()
-                if current!=start:
-                        current.make_closed()
-        return False
 
 def make_grid(rows, width):
         grid = []
